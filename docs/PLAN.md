@@ -42,13 +42,13 @@ This document tracks the step-by-step implementation of the Language Server Mana
 - [ ] Write tests with mock LSP server (deferred to integration testing)
 
 ### 1.5 LSP Manager Implementation
-- [ ] Implement `LspManager` with `Arc<Mutex<HashMap>>`
-- [ ] Implement lazy LSP client initialization
-- [ ] Implement workspace root detection (CLI arg, git root, cwd)
-- [ ] Implement language detection from file extensions
-- [ ] Implement LSP process lifecycle (spawn, monitor, shutdown)
-- [ ] Add graceful shutdown for all LSP processes
-- [ ] Write tests for manager lifecycle
+- [x] Implement `LspManager` with `Arc<Mutex<HashMap>>`
+- [x] Implement lazy LSP client initialization
+- [x] Implement workspace root detection (CLI arg, git root, cwd) - in main.rs
+- [x] Implement language detection from file extensions
+- [x] Implement LSP process lifecycle (spawn, monitor, shutdown)
+- [x] Add graceful shutdown for all LSP processes
+- [ ] Write tests for manager lifecycle (deferred to integration testing)
 
 ### 1.6 MCP Server Integration
 - [ ] Set up MCP server with `mcp-rs`
