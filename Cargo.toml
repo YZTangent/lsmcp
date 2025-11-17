@@ -1,0 +1,53 @@
+[package]
+name = "lsmcp"
+version = "0.1.0"
+edition = "2021"
+authors = ["LSMCP Contributors"]
+description = "Language Server Manager for Model Context Protocol"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/YZTangent/lsmcp"
+keywords = ["lsp", "mcp", "language-server", "llm", "cli"]
+categories = ["development-tools", "command-line-utilities"]
+
+[dependencies]
+# Async Runtime
+tokio = { version = "1.35", features = ["full"] }
+async-trait = "0.1"
+futures = "0.3"
+
+# LSP Protocol
+lsp-types = "0.95"
+lsp-server = "0.7"
+
+# Serialization
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+toml = "0.8"
+
+# Error Handling
+anyhow = "1.0"
+thiserror = "1.0"
+
+# Logging
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt"] }
+
+# Utilities
+url = "2.5"
+path-clean = "1.0"
+dirs = "5.0"
+
+# CLI
+clap = { version = "4.5", features = ["derive"] }
+
+# Process management
+tokio-util = { version = "0.7", features = ["codec"] }
+
+[build-dependencies]
+# For embedding registry at build time
+include_dir = "0.7"
+
+[dev-dependencies]
+tempfile = "3.8"
+assert_cmd = "2.0"
+predicates = "3.0"
