@@ -7,9 +7,13 @@
 
 use crate::config::{get_default_configs, LspPackage, UserConfig};
 use crate::types::LspError;
+use include_dir::{include_dir, Dir};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
-use tracing::{debug, info};
+use tracing::{debug, info, warn};
+
+// Embed the registry directory at compile time
+static REGISTRY_DIR: Dir = include_dir!("$CARGO_MANIFEST_DIR/registry");
 
 pub struct ConfigLoader {
     defaults: HashMap<String, LspPackage>,
@@ -38,9 +42,38 @@ impl ConfigLoader {
     }
 
     fn load_registry() -> Result<HashMap<String, LspPackage>, LspError> {
-        // For now, registry is empty. Will be populated when we sync from Mason
-        // TODO: Load embedded registry files via include_dir! macro
-        Ok(HashMap::new())
+        let mut registry = HashMap::new();
+
+        // Iterate through all embedded .toml files
+        for file in REGISTRY_DIR.files() {
+            if let Some(file_name) = file.path().file_name() {
+                let file_name_str = file_name.to_string_lossy();
+
+                if file_name_str.ends_with(".toml") {
+                    let content = file.contents_utf8().ok_or_else(|| {
+                        LspError::ConfigError(format!("Invalid UTF-8 in {}", file_name_str))
+                    })?;
+
+                    match toml::from_str::<LspPackage>(content) {
+                        Ok(package) => {
+                            let lang_key = if !package.languages.is_empty() {
+                                package.languages[0].clone()
+                            } else {
+                                package.name.clone()
+                            };
+
+                            debug!("Loaded registry entry: {} for language: {}", package.name, lang_key);
+                            registry.insert(lang_key, package);
+                        }
+                        Err(e) => {
+                            warn!("Failed to parse registry file {}: {}", file_name_str, e);
+                        }
+                    }
+                }
+            }
+        }
+
+        Ok(registry)
     }
 
     fn load_user_config() -> Result<Option<UserConfig>, LspError> {
@@ -240,5 +273,32 @@ mod tests {
         let loader = ConfigLoader::new().unwrap();
         let result = loader.get_lsp_for_extension("xyz");
         assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_registry_loaded() {
+        let loader = ConfigLoader::new().unwrap();
+
+        // Should have 4 defaults + 20 from registry
+        assert!(!loader.registry.is_empty(), "Registry should not be empty");
+
+        // Verify we can access a registry-only LSP (not in defaults)
+        let lua_lsp = loader.get_lsp_for_extension("lua");
+        assert!(lua_lsp.is_ok(), "Should find Lua LSP from registry");
+        assert_eq!(lua_lsp.unwrap().name, "lua-language-server");
+    }
+
+    #[test]
+    fn test_list_available_lsps() {
+        let loader = ConfigLoader::new().unwrap();
+        let lsps = loader.list_available_lsps();
+
+        // Should have at least defaults (4) + some from registry
+        assert!(lsps.len() >= 4, "Should have at least 4 LSPs");
+
+        // Verify mix of defaults and registry
+        let names: Vec<&str> = lsps.iter().map(|p| p.name.as_str()).collect();
+        assert!(names.contains(&"rust-analyzer"), "Should have rust-analyzer");
+        assert!(names.contains(&"typescript-language-server"), "Should have TypeScript LSP");
     }
 }

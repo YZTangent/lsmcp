@@ -1,0 +1,15 @@
+name = "rust-analyzer"
+description = "Implementation of LSP for Rust"
+homepage = "https://rust-analyzer.github.io/"
+licenses = ["MIT", "Apache-2.0"]
+languages = ["rust"]
+file_extensions = ["rs"]
+
+[source]
+type = "External"
+command = "rust-analyzer"
+
+[bin]
+primary = "rust-analyzer"
+additional = []
+lsp_args = []

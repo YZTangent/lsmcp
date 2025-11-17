@@ -1,0 +1,15 @@
+name = "texlab"
+description = "LaTeX language server"
+homepage = "https://github.com/latex-lsp/texlab"
+licenses = ["GPL-3.0"]
+languages = ["latex", "tex"]
+file_extensions = ["tex", "bib"]
+
+[source]
+type = "External"
+command = "texlab"
+
+[bin]
+primary = "texlab"
+additional = []
+lsp_args = []

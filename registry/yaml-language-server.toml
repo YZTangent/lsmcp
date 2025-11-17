@@ -1,0 +1,15 @@
+name = "yaml-language-server"
+description = "YAML language server"
+homepage = "https://github.com/redhat-developer/yaml-language-server"
+licenses = ["MIT"]
+languages = ["yaml"]
+file_extensions = ["yaml", "yml"]
+
+[source]
+type = "Npm"
+package = "yaml-language-server"
+
+[bin]
+primary = "yaml-language-server"
+additional = []
+lsp_args = ["--stdio"]

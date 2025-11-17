@@ -1,0 +1,15 @@
+name = "zls"
+description = "Zig language server"
+homepage = "https://github.com/zigtools/zls"
+licenses = ["MIT"]
+languages = ["zig"]
+file_extensions = ["zig"]
+
+[source]
+type = "External"
+command = "zls"
+
+[bin]
+primary = "zls"
+additional = []
+lsp_args = []
