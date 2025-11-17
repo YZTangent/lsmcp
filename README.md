@@ -10,6 +10,8 @@ LSMCP is a bridge between the [Model Context Protocol (MCP)](https://modelcontex
 - 📦 **24 LSP servers supported**: 4 built-in defaults + 20 from Mason registry
 - 🎯 **6 core MCP tools**: goto_definition, find_references, hover, document_symbols, diagnostics, workspace_symbols
 - ⚡ **Lazy initialization**: LSP servers start on-demand
+- 🤖 **Auto-installation**: Automatically downloads missing LSP servers on first use
+- 📍 **Multi-location discovery**: Checks LSMCP, Mason, and system PATH for installed LSPs
 - 🔧 **Highly configurable**: 3-tier config system (user → registry → defaults)
 - 🦀 **Written in Rust**: Fast, safe, single binary
 
@@ -17,7 +19,14 @@ LSMCP is a bridge between the [Model Context Protocol (MCP)](https://modelcontex
 
 ### Prerequisites
 
-Install the LSP servers you need:
+**LSP servers are automatically installed on first use!** LSMCP will download and manage LSP servers for you.
+
+However, you'll need the package managers installed for auto-installation to work:
+- `npm` (for TypeScript, JavaScript LSPs)
+- `cargo` (for Rust LSPs)
+- `go` (for Go LSPs)
+
+**Optional - Manual Installation**: If you prefer to install LSPs manually or already have them:
 
 ```bash
 # TypeScript/JavaScript
@@ -32,6 +41,11 @@ rustup component add rust-analyzer
 # Go
 go install golang.org/x/tools/gopls@latest
 ```
+
+LSMCP will automatically detect existing installations in:
+- `~/.local/share/lsmcp/servers/` (LSMCP-managed)
+- `~/.local/share/nvim/mason/bin/` (Mason)
+- System PATH
 
 ### Build & Install
 

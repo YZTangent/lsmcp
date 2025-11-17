@@ -37,6 +37,7 @@ url = "2.5"
 path-clean = "1.0"
 dirs = "5.0"
 include_dir = "0.7"
+chrono = "0.4"
 
 # CLI
 clap = { version = "4.5", features = ["derive"] }

@@ -31,6 +31,10 @@ pub enum InstallSource {
         package: String,
         version: Option<String>,
     },
+    Go {
+        package: String,
+        version: Option<String>,
+    },
     GithubRelease {
         repo: String,
         tag: Option<String>,
