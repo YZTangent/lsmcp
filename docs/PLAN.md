@@ -86,10 +86,10 @@ This document tracks the step-by-step implementation of the Language Server Mana
   - [ ] Format results with file locations
 
 ### 2.3 Diagnostics Tools
-- [ ] Implement `lsp_diagnostics` tool
-  - [ ] Call LSP `textDocument/publishDiagnostics`
-  - [ ] Format errors, warnings, hints
-  - [ ] Include source code context
+- [x] Implement `lsp_diagnostics` tool
+  - [x] Call LSP `textDocument/publishDiagnostics`
+  - [x] Format errors, warnings, hints
+  - [x] Include source code context
 
 ### 2.4 Testing
 - [ ] Create test workspace with TypeScript project

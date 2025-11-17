@@ -116,6 +116,15 @@ impl LspManager {
         client.document_symbols(file_path).await
     }
 
+    /// Get diagnostics for a file
+    pub async fn get_diagnostics(
+        &self,
+        file_path: &Path,
+    ) -> Result<Vec<Diagnostic>, LspError> {
+        let client = self.get_client_for_file(file_path).await?;
+        client.get_diagnostics(file_path).await
+    }
+
     /// Get status of all active LSP clients
     pub async fn status(&self) -> Vec<(String, bool)> {
         let clients = self.clients.lock().await;

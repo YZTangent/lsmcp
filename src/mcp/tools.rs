@@ -99,6 +99,20 @@ pub fn get_tool_definitions() -> Vec<Tool> {
                 "required": ["file"]
             }),
         },
+        Tool {
+            name: "lsp_diagnostics".to_string(),
+            description: "Get diagnostics (errors, warnings, hints) for a file from the LSP server. Shows compiler errors, linting issues, and other problems.".to_string(),
+            input_schema: serde_json::json!({
+                "type": "object",
+                "properties": {
+                    "file": {
+                        "type": "string",
+                        "description": "Absolute path to the file"
+                    }
+                },
+                "required": ["file"]
+            }),
+        },
     ]
 }
 
@@ -115,6 +129,7 @@ pub async fn call_tool(
         "lsp_find_references" => handle_find_references(args, lsp_manager).await,
         "lsp_hover" => handle_hover(args, lsp_manager).await,
         "lsp_document_symbols" => handle_document_symbols(args, lsp_manager).await,
+        "lsp_diagnostics" => handle_diagnostics(args, lsp_manager).await,
         _ => CallToolResult {
             content: vec![ToolContent::Text {
                 text: format!("Unknown tool: {}", name),
@@ -337,6 +352,46 @@ async fn handle_document_symbols(args: Value, lsp_manager: Arc<LspManager>) -> C
     }
 }
 
+#[derive(Debug, Deserialize)]
+struct DiagnosticsArgs {
+    file: String,
+}
+
+async fn handle_diagnostics(args: Value, lsp_manager: Arc<LspManager>) -> CallToolResult {
+    let args: DiagnosticsArgs = match serde_json::from_value(args) {
+        Ok(a) => a,
+        Err(e) => {
+            return CallToolResult {
+                content: vec![ToolContent::Text {
+                    text: format!("Invalid arguments: {}", e),
+                }],
+                is_error: Some(true),
+            };
+        }
+    };
+
+    let file_path = PathBuf::from(&args.file);
+
+    match lsp_manager.get_diagnostics(&file_path).await {
+        Ok(diagnostics) => {
+            let text = format_diagnostics(diagnostics);
+            CallToolResult {
+                content: vec![ToolContent::Text { text }],
+                is_error: None,
+            }
+        }
+        Err(e) => {
+            error!("get_diagnostics error: {}", e);
+            CallToolResult {
+                content: vec![ToolContent::Text {
+                    text: format!("Error: {}", e),
+                }],
+                is_error: Some(true),
+            }
+        }
+    }
+}
+
 // Formatting helpers
 
 fn format_definition_response(response: GotoDefinitionResponse) -> String {
@@ -468,4 +523,78 @@ fn format_document_symbol(symbol: &DocumentSymbol, indent: usize, output: &mut S
             format_document_symbol(child, indent + 1, output);
         }
     }
+}
+
+fn format_diagnostics(diagnostics: Vec<Diagnostic>) -> String {
+    if diagnostics.is_empty() {
+        return "No diagnostics found (no errors or warnings)".to_string();
+    }
+
+    let mut errors = 0;
+    let mut warnings = 0;
+    let mut infos = 0;
+    let mut hints = 0;
+
+    for diagnostic in &diagnostics {
+        match diagnostic.severity {
+            Some(DiagnosticSeverity::ERROR) => errors += 1,
+            Some(DiagnosticSeverity::WARNING) => warnings += 1,
+            Some(DiagnosticSeverity::INFORMATION) => infos += 1,
+            Some(DiagnosticSeverity::HINT) => hints += 1,
+            None | Some(_) => {}
+        }
+    }
+
+    let mut output = format!(
+        "Found {} diagnostic(s): {} error(s), {} warning(s), {} info(s), {} hint(s)\n\n",
+        diagnostics.len(),
+        errors,
+        warnings,
+        infos,
+        hints
+    );
+
+    for diagnostic in &diagnostics {
+        let severity = match diagnostic.severity {
+            Some(DiagnosticSeverity::ERROR) => "ERROR",
+            Some(DiagnosticSeverity::WARNING) => "WARNING",
+            Some(DiagnosticSeverity::INFORMATION) => "INFO",
+            Some(DiagnosticSeverity::HINT) => "HINT",
+            None | Some(_) => "UNKNOWN",
+        };
+
+        let source = diagnostic
+            .source
+            .as_ref()
+            .map(|s| format!("[{}] ", s))
+            .unwrap_or_default();
+
+        output.push_str(&format!(
+            "{}{} at line {}:{}-{}:{}: {}\n",
+            source,
+            severity,
+            diagnostic.range.start.line + 1,
+            diagnostic.range.start.character + 1,
+            diagnostic.range.end.line + 1,
+            diagnostic.range.end.character + 1,
+            diagnostic.message
+        ));
+
+        // Add related information if available
+        if let Some(related) = &diagnostic.related_information {
+            for info in related {
+                output.push_str(&format!(
+                    "  Related: {} at {}:{}:{}\n",
+                    info.message,
+                    info.location.uri.path(),
+                    info.location.range.start.line + 1,
+                    info.location.range.start.character + 1
+                ));
+            }
+        }
+
+        output.push('\n');
+    }
+
+    output
 }
