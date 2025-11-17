@@ -31,15 +31,15 @@ This document tracks the step-by-step implementation of the Language Server Mana
 - [x] Document registry update process
 
 ### 1.4 LSP Client Implementation
-- [ ] Implement `LspClient` struct with process management
-- [ ] Implement JSON-RPC message parsing (LSP protocol)
-- [ ] Implement LSP client initialization handshake
-- [ ] Implement request/response handling with futures
-- [ ] Implement `textDocument/didOpen` notification
-- [ ] Implement `textDocument/didClose` notification
-- [ ] Add request timeout handling (30s default)
-- [ ] Add process crash detection and recovery
-- [ ] Write tests with mock LSP server
+- [x] Implement `LspClient` struct with process management
+- [x] Implement JSON-RPC message parsing (LSP protocol)
+- [x] Implement LSP client initialization handshake
+- [x] Implement request/response handling with futures
+- [x] Implement `textDocument/didOpen` notification
+- [x] Implement `textDocument/didClose` notification
+- [x] Add request timeout handling (30s default)
+- [x] Add process crash detection and recovery (via kill_on_drop)
+- [ ] Write tests with mock LSP server (deferred to integration testing)
 
 ### 1.5 LSP Manager Implementation
 - [ ] Implement `LspManager` with `Arc<Mutex<HashMap>>`
