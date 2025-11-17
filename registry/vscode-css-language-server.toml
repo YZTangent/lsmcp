@@ -1,0 +1,15 @@
+name = "vscode-css-language-server"
+description = "CSS/SCSS/Less language server"
+homepage = "https://github.com/microsoft/vscode"
+licenses = ["MIT"]
+languages = ["css", "scss", "less"]
+file_extensions = ["css", "scss", "less", "sass"]
+
+[source]
+type = "Npm"
+package = "vscode-langservers-extracted"
+
+[bin]
+primary = "vscode-css-language-server"
+additional = []
+lsp_args = ["--stdio"]

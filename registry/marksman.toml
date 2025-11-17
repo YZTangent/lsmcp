@@ -1,0 +1,15 @@
+name = "marksman"
+description = "Markdown language server"
+homepage = "https://github.com/artempyanykh/marksman"
+licenses = ["MIT"]
+languages = ["markdown"]
+file_extensions = ["md", "markdown"]
+
+[source]
+type = "External"
+command = "marksman"
+
+[bin]
+primary = "marksman"
+additional = []
+lsp_args = ["server"]

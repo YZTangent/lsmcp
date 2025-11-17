@@ -1,0 +1,15 @@
+name = "lua-language-server"
+description = "Lua language server"
+homepage = "https://github.com/LuaLS/lua-language-server"
+licenses = ["MIT"]
+languages = ["lua"]
+file_extensions = ["lua"]
+
+[source]
+type = "External"
+command = "lua-language-server"
+
+[bin]
+primary = "lua-language-server"
+additional = []
+lsp_args = []

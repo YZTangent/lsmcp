@@ -1,0 +1,15 @@
+name = "bash-language-server"
+description = "Bash language server"
+homepage = "https://github.com/bash-lsp/bash-language-server"
+licenses = ["MIT"]
+languages = ["bash", "sh"]
+file_extensions = ["sh", "bash"]
+
+[source]
+type = "Npm"
+package = "bash-language-server"
+
+[bin]
+primary = "bash-language-server"
+additional = []
+lsp_args = ["start"]

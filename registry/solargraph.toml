@@ -1,0 +1,15 @@
+name = "solargraph"
+description = "Ruby language server"
+homepage = "https://solargraph.org/"
+licenses = ["MIT"]
+languages = ["ruby"]
+file_extensions = ["rb", "rake", "gemspec"]
+
+[source]
+type = "External"
+command = "solargraph"
+
+[bin]
+primary = "solargraph"
+additional = []
+lsp_args = ["stdio"]

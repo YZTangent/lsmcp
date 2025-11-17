@@ -1,0 +1,15 @@
+name = "vue-language-server"
+description = "Vue language server"
+homepage = "https://github.com/vuejs/language-tools"
+licenses = ["MIT"]
+languages = ["vue"]
+file_extensions = ["vue"]
+
+[source]
+type = "Npm"
+package = "@vue/language-server"
+
+[bin]
+primary = "vue-language-server"
+additional = []
+lsp_args = ["--stdio"]

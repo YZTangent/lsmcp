@@ -1,0 +1,15 @@
+name = "vscode-html-language-server"
+description = "HTML language server"
+homepage = "https://github.com/microsoft/vscode"
+licenses = ["MIT"]
+languages = ["html"]
+file_extensions = ["html", "htm"]
+
+[source]
+type = "Npm"
+package = "vscode-langservers-extracted"
+
+[bin]
+primary = "vscode-html-language-server"
+additional = []
+lsp_args = ["--stdio"]

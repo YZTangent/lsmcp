@@ -1,0 +1,15 @@
+name = "elixir-ls"
+description = "Elixir language server"
+homepage = "https://github.com/elixir-lsp/elixir-ls"
+licenses = ["Apache-2.0"]
+languages = ["elixir"]
+file_extensions = ["ex", "exs"]
+
+[source]
+type = "External"
+command = "elixir-ls"
+
+[bin]
+primary = "elixir-ls"
+additional = []
+lsp_args = []

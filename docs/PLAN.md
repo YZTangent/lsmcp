@@ -23,12 +23,12 @@ This document tracks the step-by-step implementation of the Language Server Mana
 - [x] Write tests for config system
 
 ### 1.3 Mason Registry Integration
-- [ ] Create `scripts/sync-mason-registry.rs`
-- [ ] Implement Mason YAML → our TOML converter
-- [ ] Sync initial set of LSPs (rust-analyzer, typescript-language-server, pyright, gopls)
-- [ ] Add 20+ popular LSPs from Mason
-- [ ] Embed registry files in binary via `build.rs`
-- [ ] Document registry update process
+- [x] Create `scripts/sync-mason-registry.rs`
+- [x] Implement Mason YAML → our TOML converter
+- [x] Sync initial set of LSPs (rust-analyzer, typescript-language-server, pyright, gopls)
+- [x] Add 20+ popular LSPs from Mason
+- [x] Embed registry files in binary via `build.rs`
+- [x] Document registry update process
 
 ### 1.4 LSP Client Implementation
 - [ ] Implement `LspClient` struct with process management

@@ -1,0 +1,15 @@
+name = "jdtls"
+description = "Eclipse JDT Language Server for Java"
+homepage = "https://github.com/eclipse/eclipse.jdt.ls"
+licenses = ["EPL-2.0"]
+languages = ["java"]
+file_extensions = ["java"]
+
+[source]
+type = "External"
+command = "jdtls"
+
+[bin]
+primary = "jdtls"
+additional = []
+lsp_args = []

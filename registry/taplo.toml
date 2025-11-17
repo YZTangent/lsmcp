@@ -1,0 +1,15 @@
+name = "taplo"
+description = "TOML language server"
+homepage = "https://taplo.tamasfe.dev/"
+licenses = ["MIT"]
+languages = ["toml"]
+file_extensions = ["toml"]
+
+[source]
+type = "External"
+command = "taplo"
+
+[bin]
+primary = "taplo"
+additional = []
+lsp_args = ["lsp", "stdio"]

@@ -1,0 +1,15 @@
+name = "metals"
+description = "Scala language server"
+homepage = "https://scalameta.org/metals/"
+licenses = ["Apache-2.0"]
+languages = ["scala"]
+file_extensions = ["scala", "sc", "sbt"]
+
+[source]
+type = "External"
+command = "metals"
+
+[bin]
+primary = "metals"
+additional = []
+lsp_args = []

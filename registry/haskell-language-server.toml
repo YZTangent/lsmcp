@@ -1,0 +1,15 @@
+name = "haskell-language-server"
+description = "Haskell language server"
+homepage = "https://github.com/haskell/haskell-language-server"
+licenses = ["Apache-2.0"]
+languages = ["haskell"]
+file_extensions = ["hs", "lhs"]
+
+[source]
+type = "External"
+command = "haskell-language-server"
+
+[bin]
+primary = "haskell-language-server-wrapper"
+additional = ["haskell-language-server"]
+lsp_args = ["--lsp"]
