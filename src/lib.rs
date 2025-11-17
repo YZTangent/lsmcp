@@ -5,6 +5,7 @@
 //! for CLI-based LLM tools.
 
 pub mod config;
+pub mod installer;
 pub mod lsp;
 pub mod mcp;
 pub mod tools;
@@ -12,6 +13,7 @@ pub mod types;
 pub mod utils;
 
 pub use config::ConfigLoader;
+pub use installer::ServerInstaller;
 pub use lsp::{LspClient, LspManager};
 pub use mcp::McpServer;
 pub use types::LspError;

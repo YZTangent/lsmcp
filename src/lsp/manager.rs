@@ -3,6 +3,7 @@
 //! Manages a pool of LSP clients, one per language, with lazy initialization
 
 use crate::config::{ConfigLoader, LspPackage};
+use crate::installer::ServerInstaller;
 use crate::lsp::LspClient;
 use crate::types::LspError;
 use lsp_types::*;
@@ -10,7 +11,7 @@ use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use tokio::sync::Mutex;
-use tracing::{debug, info};
+use tracing::{debug, info, warn};
 
 /// LSP Manager handles lifecycle of all LSP clients
 pub struct LspManager {
@@ -19,6 +20,9 @@ pub struct LspManager {
 
     /// Configuration loader
     config: Arc<ConfigLoader>,
+
+    /// Server installer for auto-downloading LSPs
+    installer: Arc<Mutex<ServerInstaller>>,
 
     /// Active LSP clients (language -> client)
     clients: Arc<Mutex<HashMap<String, Arc<LspClient>>>>,
@@ -29,9 +33,12 @@ impl LspManager {
     pub fn new(workspace_root: PathBuf, config: Arc<ConfigLoader>) -> Result<Self, LspError> {
         info!("Creating LSP manager for workspace: {}", workspace_root.display());
 
+        let installer = ServerInstaller::new()?;
+
         Ok(Self {
             workspace_root,
             config,
+            installer: Arc::new(Mutex::new(installer)),
             clients: Arc::new(Mutex::new(HashMap::new())),
         })
     }
@@ -47,9 +54,36 @@ impl LspManager {
         }
 
         // Get LSP configuration for this language
-        let lsp_config = self.config.get_lsp_for_language(language)?;
+        let mut lsp_config = self.config.get_lsp_for_language(language)?;
 
         info!("Initializing new LSP client for {}: {}", language, lsp_config.name);
+
+        // Try to find or install the LSP binary
+        let binary_path = {
+            let mut installer = self.installer.lock().await;
+
+            // First, try to find existing installation
+            if let Some(path) = installer.find_lsp_binary(&lsp_config.name, &lsp_config.bin.primary) {
+                info!("Found existing LSP binary for {}: {}", lsp_config.name, path.display());
+                path
+            } else {
+                // Auto-install if not found
+                info!("LSP server {} not found, attempting auto-install...", lsp_config.name);
+                match installer.install_lsp(&lsp_config).await {
+                    Ok(path) => {
+                        info!("Successfully auto-installed {} to {}", lsp_config.name, path.display());
+                        path
+                    }
+                    Err(e) => {
+                        warn!("Failed to auto-install {}: {}", lsp_config.name, e);
+                        return Err(e);
+                    }
+                }
+            }
+        };
+
+        // Update the config with the resolved binary path
+        lsp_config.bin.primary = binary_path.to_string_lossy().to_string();
 
         // Spawn new LSP client
         let client = LspClient::spawn(
