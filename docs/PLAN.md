@@ -80,10 +80,10 @@ This document tracks the step-by-step implementation of the Language Server Mana
   - [x] Call LSP `textDocument/documentSymbol`
   - [x] Format symbol hierarchy (classes, functions, variables)
   - [x] Include location information
-- [ ] Implement `lsp_workspace_symbols` tool (future enhancement)
-  - [ ] Parse query string
-  - [ ] Call LSP `workspace/symbol`
-  - [ ] Format results with file locations
+- [x] Implement `lsp_workspace_symbols` tool
+  - [x] Parse query string
+  - [x] Call LSP `workspace/symbol`
+  - [x] Format results with file locations
 
 ### 2.3 Diagnostics Tools
 - [x] Implement `lsp_diagnostics` tool
@@ -92,10 +92,10 @@ This document tracks the step-by-step implementation of the Language Server Mana
   - [x] Include source code context
 
 ### 2.4 Testing
-- [ ] Create test workspace with TypeScript project
-- [ ] Create test workspace with Rust project
-- [ ] Write integration tests for each tool
-- [ ] Test with real LSP servers
+- [x] Create test workspace with TypeScript project
+- [x] Create test workspace with Rust project
+- [x] Write integration tests for each tool
+- [x] Test with real LSP servers
 
 ## Phase 3: Advanced Features
 

@@ -125,6 +125,16 @@ impl LspManager {
         client.get_diagnostics(file_path).await
     }
 
+    /// Search for symbols across the workspace
+    pub async fn workspace_symbols(
+        &self,
+        query: String,
+        language: &str,
+    ) -> Result<Option<Vec<SymbolInformation>>, LspError> {
+        let client = self.get_or_create_client(language).await?;
+        client.workspace_symbols(query).await
+    }
+
     /// Get status of all active LSP clients
     pub async fn status(&self) -> Vec<(String, bool)> {
         let clients = self.clients.lock().await;

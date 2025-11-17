@@ -113,6 +113,24 @@ pub fn get_tool_definitions() -> Vec<Tool> {
                 "required": ["file"]
             }),
         },
+        Tool {
+            name: "lsp_workspace_symbols".to_string(),
+            description: "Search for symbols across the entire workspace by name or pattern. Useful for finding functions, classes, variables, etc. across multiple files.".to_string(),
+            input_schema: serde_json::json!({
+                "type": "object",
+                "properties": {
+                    "query": {
+                        "type": "string",
+                        "description": "Search query (symbol name or pattern)"
+                    },
+                    "language": {
+                        "type": "string",
+                        "description": "Language to search in (e.g., 'rust', 'typescript', 'python', 'go')"
+                    }
+                },
+                "required": ["query", "language"]
+            }),
+        },
     ]
 }
 
@@ -130,6 +148,7 @@ pub async fn call_tool(
         "lsp_hover" => handle_hover(args, lsp_manager).await,
         "lsp_document_symbols" => handle_document_symbols(args, lsp_manager).await,
         "lsp_diagnostics" => handle_diagnostics(args, lsp_manager).await,
+        "lsp_workspace_symbols" => handle_workspace_symbols(args, lsp_manager).await,
         _ => CallToolResult {
             content: vec![ToolContent::Text {
                 text: format!("Unknown tool: {}", name),
@@ -392,6 +411,51 @@ async fn handle_diagnostics(args: Value, lsp_manager: Arc<LspManager>) -> CallTo
     }
 }
 
+#[derive(Debug, Deserialize)]
+struct WorkspaceSymbolsArgs {
+    query: String,
+    language: String,
+}
+
+async fn handle_workspace_symbols(args: Value, lsp_manager: Arc<LspManager>) -> CallToolResult {
+    let args: WorkspaceSymbolsArgs = match serde_json::from_value(args) {
+        Ok(a) => a,
+        Err(e) => {
+            return CallToolResult {
+                content: vec![ToolContent::Text {
+                    text: format!("Invalid arguments: {}", e),
+                }],
+                is_error: Some(true),
+            };
+        }
+    };
+
+    match lsp_manager.workspace_symbols(args.query.clone(), &args.language).await {
+        Ok(Some(symbols)) => {
+            let text = format_workspace_symbols(symbols, &args.query);
+            CallToolResult {
+                content: vec![ToolContent::Text { text }],
+                is_error: None,
+            }
+        }
+        Ok(None) => CallToolResult {
+            content: vec![ToolContent::Text {
+                text: format!("No symbols found for query: {}", args.query),
+            }],
+            is_error: None,
+        },
+        Err(e) => {
+            error!("workspace_symbols error: {}", e);
+            CallToolResult {
+                content: vec![ToolContent::Text {
+                    text: format!("Error: {}", e),
+                }],
+                is_error: Some(true),
+            }
+        }
+    }
+}
+
 // Formatting helpers
 
 fn format_definition_response(response: GotoDefinitionResponse) -> String {
@@ -594,6 +658,47 @@ fn format_diagnostics(diagnostics: Vec<Diagnostic>) -> String {
         }
 
         output.push('\n');
+    }
+
+    output
+}
+
+fn format_workspace_symbols(symbols: Vec<SymbolInformation>, query: &str) -> String {
+    if symbols.is_empty() {
+        return format!("No symbols found for query: {}", query);
+    }
+
+    let mut output = format!("Found {} symbol(s) matching '{}':\n\n", symbols.len(), query);
+
+    for symbol in symbols {
+        let kind_str = format!("{:?}", symbol.kind);
+        let location_str = if let Ok(path) = symbol.location.uri.to_file_path() {
+            format!(
+                "{}:{}:{}",
+                path.display(),
+                symbol.location.range.start.line + 1,
+                symbol.location.range.start.character + 1
+            )
+        } else {
+            format!(
+                "{}:{}:{}",
+                symbol.location.uri.path(),
+                symbol.location.range.start.line + 1,
+                symbol.location.range.start.character + 1
+            )
+        };
+
+        output.push_str(&format!(
+            "- {} ({}) at {}\n",
+            symbol.name,
+            kind_str,
+            location_str
+        ));
+
+        // Add container name if available (e.g., class or module name)
+        if let Some(container) = symbol.container_name {
+            output.push_str(&format!("  in: {}\n", container));
+        }
     }
 
     output

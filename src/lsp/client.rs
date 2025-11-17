@@ -558,4 +558,18 @@ impl LspClient {
         let diagnostics_guard = self.diagnostics.lock().await;
         Ok(diagnostics_guard.get(file_path).cloned().unwrap_or_default())
     }
+
+    /// Search for symbols across the workspace
+    pub async fn workspace_symbols(
+        &self,
+        query: String,
+    ) -> Result<Option<Vec<SymbolInformation>>, LspError> {
+        let params = WorkspaceSymbolParams {
+            query,
+            work_done_progress_params: WorkDoneProgressParams::default(),
+            partial_result_params: PartialResultParams::default(),
+        };
+
+        self.send_request("workspace/symbol", params).await
+    }
 }

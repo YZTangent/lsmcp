@@ -8,7 +8,7 @@ LSMCP is a bridge between the [Model Context Protocol (MCP)](https://modelcontex
 
 - 🚀 **Zero-config for popular languages**: TypeScript, Python, Rust, Go work out-of-the-box
 - 📦 **24 LSP servers supported**: 4 built-in defaults + 20 from Mason registry
-- 🎯 **5 core MCP tools**: goto_definition, find_references, hover, document_symbols, diagnostics
+- 🎯 **6 core MCP tools**: goto_definition, find_references, hover, document_symbols, diagnostics, workspace_symbols
 - ⚡ **Lazy initialization**: LSP servers start on-demand
 - 🔧 **Highly configurable**: 3-tier config system (user → registry → defaults)
 - 🦀 **Written in Rust**: Fast, safe, single binary
@@ -120,6 +120,18 @@ Get diagnostics (errors, warnings, hints) for a file.
 - `file` (string): Absolute path to the file
 
 **Returns:** List of diagnostics with severity, location, and message. Shows compiler errors, linting issues, type errors, and other problems detected by the LSP server.
+
+---
+
+### `lsp_workspace_symbols`
+
+Search for symbols across the entire workspace by name or pattern.
+
+**Parameters:**
+- `query` (string): Search query (symbol name or pattern)
+- `language` (string): Language to search in (e.g., 'rust', 'typescript', 'python', 'go')
+
+**Returns:** List of symbols matching the query with their locations and types. Useful for finding functions, classes, variables, etc. across multiple files.
 
 ## Supported Languages
 
