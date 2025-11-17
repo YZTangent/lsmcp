@@ -79,6 +79,9 @@ pub struct LspClient {
 
     /// Opened documents
     opened_documents: Arc<Mutex<HashMap<PathBuf, String>>>,
+
+    /// Diagnostics per file
+    diagnostics: Arc<Mutex<HashMap<PathBuf, Vec<Diagnostic>>>>,
 }
 
 impl LspClient {
@@ -122,8 +125,11 @@ impl LspClient {
 
         // Spawn background tasks
         let pending_clone = Arc::clone(&pending);
+        let diagnostics = Arc::new(Mutex::new(HashMap::new()));
+        let diagnostics_clone = Arc::clone(&diagnostics);
+
         tokio::spawn(Self::write_loop(stdin, request_rx));
-        tokio::spawn(Self::read_loop(stdout, pending_clone));
+        tokio::spawn(Self::read_loop(stdout, pending_clone, diagnostics_clone));
 
         let client = Self {
             language: language.clone(),
@@ -134,6 +140,7 @@ impl LspClient {
             request_tx,
             capabilities: Arc::new(Mutex::new(None)),
             opened_documents: Arc::new(Mutex::new(HashMap::new())),
+            diagnostics,
         };
 
         // Initialize the LSP server
@@ -174,6 +181,7 @@ impl LspClient {
     async fn read_loop(
         stdout: ChildStdout,
         pending: Arc<Mutex<HashMap<u64, oneshot::Sender<Result<Value, LspError>>>>>,
+        diagnostics: Arc<Mutex<HashMap<PathBuf, Vec<Diagnostic>>>>,
     ) {
         let mut reader = BufReader::new(stdout);
         let mut headers = HashMap::new();
@@ -242,13 +250,14 @@ impl LspClient {
             debug!("Received message: {}", content_str);
 
             // Parse and dispatch message
-            Self::handle_message(&content_str, &pending).await;
+            Self::handle_message(&content_str, &pending, &diagnostics).await;
         }
     }
 
     async fn handle_message(
         content: &str,
         pending: &Arc<Mutex<HashMap<u64, oneshot::Sender<Result<Value, LspError>>>>>,
+        diagnostics: &Arc<Mutex<HashMap<PathBuf, Vec<Diagnostic>>>>,
     ) {
         // Try to parse as response first
         if let Ok(response) = serde_json::from_str::<JsonRpcResponse>(content) {
@@ -271,9 +280,18 @@ impl LspClient {
         }
 
         // Try to parse as notification
-        if let Ok(_notification) = serde_json::from_str::<JsonRpcNotification>(content) {
-            // TODO: Handle notifications (publishDiagnostics, etc.)
-            debug!("Received notification");
+        if let Ok(notification) = serde_json::from_str::<JsonRpcNotification>(content) {
+            // Handle publishDiagnostics notification
+            if notification.method == "textDocument/publishDiagnostics" {
+                if let Ok(params) = serde_json::from_value::<PublishDiagnosticsParams>(notification.params) {
+                    // Convert URI to PathBuf
+                    if let Ok(path) = params.uri.to_file_path() {
+                        let mut diagnostics_guard = diagnostics.lock().await;
+                        diagnostics_guard.insert(path, params.diagnostics);
+                        debug!("Updated diagnostics for file");
+                    }
+                }
+            }
             return;
         }
 
@@ -522,5 +540,22 @@ impl LspClient {
         };
 
         self.send_request("textDocument/documentSymbol", params).await
+    }
+
+    /// Get diagnostics for a file
+    pub async fn get_diagnostics(
+        &self,
+        file_path: &Path,
+    ) -> Result<Vec<Diagnostic>, LspError> {
+        // Ensure document is opened to receive diagnostics
+        if !self.opened_documents.lock().await.contains_key(file_path) {
+            self.did_open(file_path).await?;
+
+            // Wait a bit for diagnostics to be published
+            tokio::time::sleep(Duration::from_millis(500)).await;
+        }
+
+        let diagnostics_guard = self.diagnostics.lock().await;
+        Ok(diagnostics_guard.get(file_path).cloned().unwrap_or_default())
     }
 }
