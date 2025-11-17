@@ -6,10 +6,12 @@
 
 pub mod config;
 pub mod lsp;
+pub mod mcp;
 pub mod tools;
 pub mod types;
 pub mod utils;
 
 pub use config::ConfigLoader;
 pub use lsp::{LspClient, LspManager};
+pub use mcp::McpServer;
 pub use types::LspError;

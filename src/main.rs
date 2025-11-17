@@ -98,16 +98,48 @@ async fn main() -> Result<()> {
     let workspace_root = detect_workspace_root(args.workspace)?;
     info!("Workspace root: {}", workspace_root.display());
 
-    // TODO: Initialize MCP server
-    // TODO: Initialize LSP manager
-    // TODO: Start serving MCP protocol
+    // Initialize configuration loader
+    let config = match lsmcp::ConfigLoader::new() {
+        Ok(config) => std::sync::Arc::new(config),
+        Err(e) => {
+            eprintln!("Failed to load configuration: {}", e);
+            return Err(e.into());
+        }
+    };
 
-    info!("LSMCP started successfully");
+    info!("Configuration loaded successfully");
 
-    // For now, just keep running
-    tokio::signal::ctrl_c().await?;
+    // Initialize LSP manager
+    let lsp_manager = match lsmcp::LspManager::new(workspace_root, config) {
+        Ok(manager) => std::sync::Arc::new(manager),
+        Err(e) => {
+            eprintln!("Failed to create LSP manager: {}", e);
+            return Err(e.into());
+        }
+    };
 
-    info!("Shutting down...");
+    info!("LSP manager initialized");
+
+    // Create MCP server
+    let mcp_server = lsmcp::McpServer::new(lsp_manager.clone());
+
+    info!("LSMCP server starting - ready to accept MCP requests on stdio");
+
+    // Run MCP server (this blocks until client disconnects)
+    match mcp_server.run().await {
+        Ok(()) => {
+            info!("MCP server stopped normally");
+        }
+        Err(e) => {
+            eprintln!("MCP server error: {}", e);
+            return Err(e);
+        }
+    }
+
+    // Shutdown LSP manager
+    lsp_manager.shutdown().await;
+
+    info!("LSMCP shut down successfully");
 
     Ok(())
 }
