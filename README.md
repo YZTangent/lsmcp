@@ -56,9 +56,17 @@ cargo build --release
 cargo install --path .
 ```
 
-### Configure for Claude Code
+### Configure with MCP Clients
 
-Add to your MCP configuration file:
+#### Claude Desktop (Claude Code)
+
+Edit your Claude Desktop MCP configuration file:
+
+**macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
+**Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
+**Linux**: `~/.config/Claude/claude_desktop_config.json`
+
+Add LSMCP to the `mcpServers` section:
 
 ```json
 {
@@ -71,7 +79,39 @@ Add to your MCP configuration file:
 }
 ```
 
-If you don't specify `--workspace`, LSMCP will auto-detect your git root or use the current directory.
+**Note**: Replace `/path/to/your/project` with your actual project path, or omit `--workspace` to auto-detect from git root.
+
+**Quick command to edit**:
+```bash
+# macOS/Linux
+code ~/Library/Application\ Support/Claude/claude_desktop_config.json  # or use your editor
+
+# Linux
+code ~/.config/Claude/claude_desktop_config.json
+```
+
+#### Gemini CLI
+
+For Gemini CLI or other MCP clients, add LSMCP to your MCP server configuration:
+
+```json
+{
+  "mcpServers": {
+    "lsmcp": {
+      "command": "lsmcp",
+      "args": ["--workspace", "/path/to/your/project"]
+    }
+  }
+}
+```
+
+Refer to your MCP client's documentation for the specific configuration file location.
+
+#### Workspace Detection
+
+If you don't specify `--workspace`, LSMCP will automatically:
+1. Search for the nearest git root
+2. Fall back to the current working directory
 
 ## Available MCP Tools
 
