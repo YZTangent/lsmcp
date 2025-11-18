@@ -25,3 +25,16 @@ lsmcp.log
 # Testing
 /tmp/
 /test-workspaces/
+
+# Packaging
+/debian/.debhelper/
+/debian/lsmcp/
+/debian/files
+/debian/*.log
+/debian/*.substvars
+*.deb
+*.rpm
+*.tar.gz
+*.tar.xz
+/pkg/
+/src/

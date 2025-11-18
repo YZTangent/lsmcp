@@ -47,7 +47,62 @@ LSMCP will automatically detect existing installations in:
 - `~/.local/share/nvim/mason/bin/` (Mason)
 - System PATH
 
-### Build & Install
+## Installation
+
+Choose your preferred installation method:
+
+### Using Package Managers (Recommended)
+
+#### Nix (with Flakes)
+
+```bash
+# Run directly without installing
+nix run github:YZTangent/lsmcp -- --help
+
+# Install to your profile
+nix profile install github:YZTangent/lsmcp
+
+# Or add to your flake.nix
+{
+  inputs.lsmcp.url = "github:YZTangent/lsmcp";
+}
+```
+
+#### Fedora/RHEL/CentOS (DNF)
+
+```bash
+# Coming soon - package will be available in Copr
+sudo dnf copr enable lsmcp/lsmcp
+sudo dnf install lsmcp
+```
+
+#### Arch Linux (AUR)
+
+```bash
+# Using yay
+yay -S lsmcp
+
+# Using paru
+paru -S lsmcp
+
+# Manual installation
+git clone https://aur.archlinux.org/lsmcp.git
+cd lsmcp
+makepkg -si
+```
+
+#### Debian/Ubuntu (APT)
+
+```bash
+# Coming soon - PPA will be available
+sudo add-apt-repository ppa:lsmcp/ppa
+sudo apt update
+sudo apt install lsmcp
+```
+
+### Build from Source
+
+If you prefer to build from source or packages aren't available for your platform:
 
 ```bash
 git clone https://github.com/YZTangent/lsmcp
@@ -55,6 +110,8 @@ cd lsmcp
 cargo build --release
 cargo install --path .
 ```
+
+**Requirements**: Rust 1.70 or higher (`curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh`)
 
 ### Configure with MCP Clients
 

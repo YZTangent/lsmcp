@@ -1,0 +1,9 @@
+lsmcp (0.1.0-1) unstable; urgency=medium
+
+  * Initial release
+  * Add auto-installation of LSP servers
+  * Support for 24+ languages
+  * 6 core MCP tools
+  * Multi-location LSP discovery
+
+ -- LSMCP Contributors <lsmcp@example.com>  Sun, 17 Nov 2024 00:00:00 +0000
