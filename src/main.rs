@@ -20,12 +20,16 @@ struct Args {
     workspace: Option<PathBuf>,
 
     /// Log level (trace, debug, info, warn, error)
-    #[arg(short, long, default_value = "info")]
+    #[arg(short, long, default_value = "error")]
     log_level: String,
 
     /// Log to file instead of stderr
     #[arg(long)]
     log_file: Option<PathBuf>,
+
+    /// Disable logging entirely (for MCP client compatibility)
+    #[arg(long)]
+    no_log: bool,
 }
 
 fn setup_logging(log_level: &str, log_file: Option<PathBuf>) -> Result<()> {
@@ -89,8 +93,10 @@ fn detect_workspace_root(provided: Option<PathBuf>) -> Result<PathBuf> {
 async fn main() -> Result<()> {
     let args = Args::parse();
 
-    // Setup logging
-    setup_logging(&args.log_level, args.log_file)?;
+    // Setup logging (skip if disabled for MCP compatibility)
+    if !args.no_log {
+        setup_logging(&args.log_level, args.log_file)?;
+    }
 
     info!("Starting LSMCP v{}", env!("CARGO_PKG_VERSION"));
 
