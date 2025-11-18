@@ -1,4 +1,4 @@
-# LSMCP - Language Server Manager for MCP
+# LSMCP - (Language Server + Model Context) Protocol
 
 **Bring LSP superpowers to your CLI LLM tools!**
 
@@ -47,7 +47,35 @@ LSMCP will automatically detect existing installations in:
 - `~/.local/share/nvim/mason/bin/` (Mason)
 - System PATH
 
-### Build & Install
+## Installation
+
+Choose your preferred installation method:
+
+### Using Package Managers (Recommended)
+
+#### Nix (with Flakes)
+
+```bash
+# Run directly without installing
+nix run github:YZTangent/lsmcp -- --help
+
+# Install to your profile
+nix profile install github:YZTangent/lsmcp
+
+# Or add to your flake.nix
+{
+  inputs.lsmcp.url = "github:YZTangent/lsmcp";
+}
+```
+
+#### Other distro support coming soon (hopefully)
+- Fedora/RHEL/CentOS (DNF)
+- Arch Linux (AUR)
+- Debian/Ubuntu (APT)
+
+### Build from Source
+
+If you prefer to build from source or packages aren't available for your platform:
 
 ```bash
 git clone https://github.com/YZTangent/lsmcp
@@ -55,6 +83,8 @@ cd lsmcp
 cargo build --release
 cargo install --path .
 ```
+
+**Requirements**: Rust 1.70 or higher (`curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh`)
 
 ### Configure with MCP Clients
 

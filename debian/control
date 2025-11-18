@@ -1,0 +1,28 @@
+Source: lsmcp
+Section: devel
+Priority: optional
+Maintainer: LSMCP Contributors <lsmcp@example.com>
+Build-Depends: debhelper-compat (= 13),
+               cargo,
+               rustc (>= 1.70)
+Standards-Version: 4.6.0
+Homepage: https://github.com/YZTangent/lsmcp
+Vcs-Browser: https://github.com/YZTangent/lsmcp
+Vcs-Git: https://github.com/YZTangent/lsmcp.git
+Rules-Requires-Root: no
+
+Package: lsmcp
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Recommends: nodejs, python3, golang
+Description: Language Server Manager for Model Context Protocol
+ LSMCP is a bridge between the Model Context Protocol (MCP) and
+ Language Server Protocol (LSP), enabling CLI-based LLM clients
+ like Claude Code and Gemini CLI to access rich code intelligence.
+ .
+ Features:
+  - Auto-installation of LSP servers
+  - Support for 24+ languages
+  - 6 core MCP tools (goto_definition, find_references, hover, etc.)
+  - Multi-location LSP discovery (LSMCP, Mason, system PATH)
+  - Lazy initialization for performance

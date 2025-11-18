@@ -1,0 +1,13 @@
+#!/usr/bin/make -f
+
+%:
+	dh $@
+
+override_dh_auto_build:
+	cargo build --release --locked
+
+override_dh_auto_install:
+	install -Dm755 target/release/lsmcp debian/lsmcp/usr/bin/lsmcp
+
+override_dh_auto_test:
+	cargo test --release --locked
