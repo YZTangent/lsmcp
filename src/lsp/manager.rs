@@ -2,7 +2,7 @@
 //!
 //! Manages a pool of LSP clients, one per language, with lazy initialization
 
-use crate::config::{ConfigLoader, LspPackage};
+use crate::config::ConfigLoader;
 use crate::installer::ServerInstaller;
 use crate::lsp::LspClient;
 use crate::types::LspError;

@@ -7,10 +7,10 @@ use crate::types::LspError;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::process::Command;
 use tokio::process::Command as AsyncCommand;
-use tracing::{debug, info, warn};
+use tracing::{debug, info};
 
 /// Manifest tracking installed LSP servers
 #[derive(Debug, Serialize, Deserialize, Default)]
@@ -50,9 +50,7 @@ impl ServerInstaller {
         let manifest_path = data_dir.join("manifest.json");
 
         // Ensure directories exist
-        fs::create_dir_all(&servers_dir).map_err(|e| {
-            LspError::Io(e)
-        })?;
+        fs::create_dir_all(&servers_dir).map_err(|e| LspError::Io(e))?;
 
         // Load or create manifest
         let manifest = if manifest_path.exists() {
@@ -126,19 +124,22 @@ impl ServerInstaller {
         info!("Installing LSP server: {}", package.name);
 
         let binary_path = match &package.source {
-            InstallSource::Npm { package: npm_pkg, .. } => {
-                self.install_npm(npm_pkg, &package.bin.primary).await?
-            }
+            InstallSource::Npm {
+                package: npm_pkg, ..
+            } => self.install_npm(npm_pkg, &package.bin.primary).await?,
             InstallSource::Cargo { crate_name, .. } => {
                 self.install_cargo(crate_name, &package.bin.primary).await?
             }
-            InstallSource::Go { package: go_pkg, .. } => {
-                self.install_go(go_pkg, &package.bin.primary).await?
-            }
+            InstallSource::Go {
+                package: go_pkg, ..
+            } => self.install_go(go_pkg, &package.bin.primary).await?,
             InstallSource::External { command } => {
                 return Err(LspError::ServerNotFound(
                     package.name.clone(),
-                    format!("Cannot auto-install external command: {}. Please install manually.", command),
+                    format!(
+                        "Cannot auto-install external command: {}. Please install manually.",
+                        command
+                    ),
                 ));
             }
             _ => {
@@ -189,7 +190,10 @@ impl ServerInstaller {
         if !output.status.success() {
             return Err(LspError::ServerNotFound(
                 package.to_string(),
-                format!("npm install failed: {}", String::from_utf8_lossy(&output.stderr)),
+                format!(
+                    "npm install failed: {}",
+                    String::from_utf8_lossy(&output.stderr)
+                ),
             ));
         }
 
@@ -211,7 +215,12 @@ impl ServerInstaller {
         info!("Installing {} via cargo", crate_name);
 
         let output = AsyncCommand::new("cargo")
-            .args(&["install", crate_name, "--root", self.servers_dir.to_str().unwrap()])
+            .args(&[
+                "install",
+                crate_name,
+                "--root",
+                self.servers_dir.to_str().unwrap(),
+            ])
             .output()
             .await
             .map_err(|e| {
@@ -224,7 +233,10 @@ impl ServerInstaller {
         if !output.status.success() {
             return Err(LspError::ServerNotFound(
                 crate_name.to_string(),
-                format!("cargo install failed: {}", String::from_utf8_lossy(&output.stderr)),
+                format!(
+                    "cargo install failed: {}",
+                    String::from_utf8_lossy(&output.stderr)
+                ),
             ));
         }
 
@@ -262,7 +274,10 @@ impl ServerInstaller {
         if !output.status.success() {
             return Err(LspError::ServerNotFound(
                 package.to_string(),
-                format!("go install failed: {}", String::from_utf8_lossy(&output.stderr)),
+                format!(
+                    "go install failed: {}",
+                    String::from_utf8_lossy(&output.stderr)
+                ),
             ));
         }
 

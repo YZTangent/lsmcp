@@ -8,7 +8,7 @@ use crate::mcp::protocol::*;
 use crate::mcp::tools;
 use anyhow::Result;
 use serde_json::Value;
-use std::io::{BufRead, Read, Write};
+use std::io::{BufRead, Write};
 use std::sync::Arc;
 use tokio::sync::Mutex;
 use tracing::{debug, error, info};
@@ -35,60 +35,39 @@ impl McpServer {
         let mut stdout = std::io::stdout();
 
         loop {
-            // Read headers
-            let mut headers = std::collections::HashMap::new();
-            loop {
-                let mut line = String::new();
-                match stdin.read_line(&mut line) {
-                    Ok(0) => {
-                        info!("Client closed connection");
-                        return Ok(());
-                    }
-                    Ok(_) => {
-                        let line = line.trim();
-                        if line.is_empty() {
-                            break;
-                        }
+            // Read newline-delimited JSON
+            let mut line = String::new();
+            match stdin.read_line(&mut line) {
+                Ok(0) => {
+                    info!("Client closed connection");
+                    return Ok(());
+                }
+                Ok(_) => {
+                    let line = line.trim();
 
-                        if let Some((key, value)) = line.split_once(": ") {
-                            headers.insert(key.to_string(), value.to_string());
-                        }
+                    // Skip empty lines
+                    if line.is_empty() {
+                        continue;
                     }
-                    Err(e) => {
-                        error!("Failed to read header: {}", e);
-                        return Err(e.into());
-                    }
+
+                    debug!("Received request: {}", line);
+
+                    // Handle request
+                    let response = self.handle_request(line).await;
+
+                    // Write response as newline-delimited JSON
+                    let response_json = serde_json::to_string(&response)?;
+                    stdout.write_all(response_json.as_bytes())?;
+                    stdout.write_all(b"\n")?;
+                    stdout.flush()?;
+
+                    debug!("Sent response");
+                }
+                Err(e) => {
+                    error!("Failed to read line: {}", e);
+                    return Err(e.into());
                 }
             }
-
-            // Get content length
-            let content_length: usize = match headers.get("Content-Length") {
-                Some(len) => len.parse()?,
-                None => {
-                    error!("Missing Content-Length header");
-                    continue;
-                }
-            };
-
-            // Read content
-            let mut buffer = vec![0u8; content_length];
-            stdin.read_exact(&mut buffer)?;
-
-            let content = String::from_utf8(buffer)?;
-            debug!("Received request: {}", content);
-
-            // Handle request
-            let response = self.handle_request(&content).await;
-
-            // Write response
-            let response_json = serde_json::to_string(&response)?;
-            let header = format!("Content-Length: {}\r\n\r\n", response_json.len());
-
-            stdout.write_all(header.as_bytes())?;
-            stdout.write_all(response_json.as_bytes())?;
-            stdout.flush()?;
-
-            debug!("Sent response");
         }
     }
 

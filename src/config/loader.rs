@@ -62,7 +62,10 @@ impl ConfigLoader {
                                 package.name.clone()
                             };
 
-                            debug!("Loaded registry entry: {} for language: {}", package.name, lang_key);
+                            debug!(
+                                "Loaded registry entry: {} for language: {}",
+                                package.name, lang_key
+                            );
                             registry.insert(lang_key, package);
                         }
                         Err(e) => {
@@ -133,17 +136,14 @@ impl ConfigLoader {
         // Check user config first
         if let Some(user_cfg) = &self.user_config {
             // Check if user has custom LSP for this extension
-            for (name, lsp_cfg) in &user_cfg.lsp {
+            for (name, _) in &user_cfg.lsp {
                 // TODO: Match against file extensions in custom configs
                 debug!("Found user config for LSP: {}", name);
             }
         }
 
         // Search in all sources: defaults, registry
-        for (source_name, source) in [
-            ("defaults", &self.defaults),
-            ("registry", &self.registry),
-        ] {
+        for (source_name, source) in [("defaults", &self.defaults), ("registry", &self.registry)] {
             for (lang, pkg) in source {
                 if pkg.file_extensions.iter().any(|e| e == ext) {
                     debug!("Found LSP '{}' for .{} in {}", pkg.name, ext, source_name);
@@ -298,7 +298,13 @@ mod tests {
 
         // Verify mix of defaults and registry
         let names: Vec<&str> = lsps.iter().map(|p| p.name.as_str()).collect();
-        assert!(names.contains(&"rust-analyzer"), "Should have rust-analyzer");
-        assert!(names.contains(&"typescript-language-server"), "Should have TypeScript LSP");
+        assert!(
+            names.contains(&"rust-analyzer"),
+            "Should have rust-analyzer"
+        );
+        assert!(
+            names.contains(&"typescript-language-server"),
+            "Should have TypeScript LSP"
+        );
     }
 }

@@ -14,8 +14,8 @@ use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
 use std::time::Duration;
 use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
-use tokio::process::{Child, ChildStdin, ChildStdout, Command};
-use tokio::sync::{mpsc, Mutex, oneshot};
+use tokio::process::{ChildStdin, ChildStdout, Command};
+use tokio::sync::{mpsc, oneshot, Mutex};
 use tokio::time::timeout;
 use tracing::{debug, error, info, warn};
 use url::Url;
@@ -94,8 +94,8 @@ impl LspClient {
         info!("Spawning LSP server for {}: {}", language, config.name);
 
         // Spawn the LSP server process
-        let mut command = config.bin.primary.as_str();
-        let mut args = config.bin.lsp_args.clone();
+        let command = config.bin.primary.as_str();
+        let args = config.bin.lsp_args.clone();
 
         let mut child = Command::new(command)
             .args(&args)
@@ -111,13 +111,15 @@ impl LspClient {
                 )
             })?;
 
-        let stdin = child.stdin.take().ok_or_else(|| {
-            LspError::ProtocolError("Failed to get stdin".to_string())
-        })?;
+        let stdin = child
+            .stdin
+            .take()
+            .ok_or_else(|| LspError::ProtocolError("Failed to get stdin".to_string()))?;
 
-        let stdout = child.stdout.take().ok_or_else(|| {
-            LspError::ProtocolError("Failed to get stdout".to_string())
-        })?;
+        let stdout = child
+            .stdout
+            .take()
+            .ok_or_else(|| LspError::ProtocolError("Failed to get stdout".to_string()))?;
 
         // Create channels for communication
         let (request_tx, request_rx) = mpsc::unbounded_channel();
@@ -152,10 +154,7 @@ impl LspClient {
     }
 
     /// Background task to write messages to LSP server
-    async fn write_loop(
-        mut stdin: ChildStdin,
-        mut request_rx: mpsc::UnboundedReceiver<String>,
-    ) {
+    async fn write_loop(mut stdin: ChildStdin, mut request_rx: mpsc::UnboundedReceiver<String>) {
         while let Some(message) = request_rx.recv().await {
             let content_length = message.len();
             let header = format!("Content-Length: {}\r\n\r\n", content_length);
@@ -283,7 +282,9 @@ impl LspClient {
         if let Ok(notification) = serde_json::from_str::<JsonRpcNotification>(content) {
             // Handle publishDiagnostics notification
             if notification.method == "textDocument/publishDiagnostics" {
-                if let Ok(params) = serde_json::from_value::<PublishDiagnosticsParams>(notification.params) {
+                if let Ok(params) =
+                    serde_json::from_value::<PublishDiagnosticsParams>(notification.params)
+                {
                     // Convert URI to PathBuf
                     if let Ok(path) = params.uri.to_file_path() {
                         let mut diagnostics_guard = diagnostics.lock().await;
@@ -319,9 +320,9 @@ impl LspClient {
         let (tx, rx) = oneshot::channel();
         self.pending.lock().await.insert(id, tx);
 
-        self.request_tx.send(message).map_err(|_| {
-            LspError::ProtocolError("Failed to send request".to_string())
-        })?;
+        self.request_tx
+            .send(message)
+            .map_err(|_| LspError::ProtocolError("Failed to send request".to_string()))?;
 
         // Wait for response with timeout
         let result = timeout(Duration::from_secs(30), rx)
@@ -329,9 +330,8 @@ impl LspClient {
             .map_err(|_| LspError::Timeout(30))?
             .map_err(|_| LspError::ProtocolError("Response channel closed".to_string()))??;
 
-        serde_json::from_value(result).map_err(|e| {
-            LspError::ProtocolError(format!("Failed to parse response: {}", e))
-        })
+        serde_json::from_value(result)
+            .map_err(|e| LspError::ProtocolError(format!("Failed to parse response: {}", e)))
     }
 
     /// Send a notification (no response expected)
@@ -349,9 +349,9 @@ impl LspClient {
         let message = serde_json::to_string(&notification)?;
         debug!("Sending notification: {}", method);
 
-        self.request_tx.send(message).map_err(|_| {
-            LspError::ProtocolError("Failed to send notification".to_string())
-        })?;
+        self.request_tx
+            .send(message)
+            .map_err(|_| LspError::ProtocolError("Failed to send notification".to_string()))?;
 
         Ok(())
     }
@@ -380,14 +380,13 @@ impl LspClient {
 
     /// Open a document
     pub async fn did_open(&self, file_path: &Path) -> Result<(), LspError> {
-        let uri = Url::from_file_path(file_path).map_err(|_| {
-            LspError::InvalidPath(file_path.to_path_buf())
-        })?;
+        let uri = Url::from_file_path(file_path)
+            .map_err(|_| LspError::InvalidPath(file_path.to_path_buf()))?;
 
         // Read file content
-        let text = tokio::fs::read_to_string(file_path).await.map_err(|e| {
-            LspError::Io(e)
-        })?;
+        let text = tokio::fs::read_to_string(file_path)
+            .await
+            .map_err(|e| LspError::Io(e))?;
 
         let params = DidOpenTextDocumentParams {
             text_document: TextDocumentItem {
@@ -398,7 +397,8 @@ impl LspClient {
             },
         };
 
-        self.send_notification("textDocument/didOpen", params).await?;
+        self.send_notification("textDocument/didOpen", params)
+            .await?;
 
         // Track opened document
         self.opened_documents
@@ -411,15 +411,15 @@ impl LspClient {
 
     /// Close a document
     pub async fn did_close(&self, file_path: &Path) -> Result<(), LspError> {
-        let uri = Url::from_file_path(file_path).map_err(|_| {
-            LspError::InvalidPath(file_path.to_path_buf())
-        })?;
+        let uri = Url::from_file_path(file_path)
+            .map_err(|_| LspError::InvalidPath(file_path.to_path_buf()))?;
 
         let params = DidCloseTextDocumentParams {
             text_document: TextDocumentIdentifier { uri },
         };
 
-        self.send_notification("textDocument/didClose", params).await?;
+        self.send_notification("textDocument/didClose", params)
+            .await?;
 
         // Remove from tracking
         self.opened_documents.lock().await.remove(file_path);
@@ -444,9 +444,8 @@ impl LspClient {
             self.did_open(file_path).await?;
         }
 
-        let uri = Url::from_file_path(file_path).map_err(|_| {
-            LspError::InvalidPath(file_path.to_path_buf())
-        })?;
+        let uri = Url::from_file_path(file_path)
+            .map_err(|_| LspError::InvalidPath(file_path.to_path_buf()))?;
 
         let params = GotoDefinitionParams {
             text_document_position_params: TextDocumentPositionParams {
@@ -473,9 +472,8 @@ impl LspClient {
             self.did_open(file_path).await?;
         }
 
-        let uri = Url::from_file_path(file_path).map_err(|_| {
-            LspError::InvalidPath(file_path.to_path_buf())
-        })?;
+        let uri = Url::from_file_path(file_path)
+            .map_err(|_| LspError::InvalidPath(file_path.to_path_buf()))?;
 
         let params = ReferenceParams {
             text_document_position: TextDocumentPositionParams {
@@ -504,9 +502,8 @@ impl LspClient {
             self.did_open(file_path).await?;
         }
 
-        let uri = Url::from_file_path(file_path).map_err(|_| {
-            LspError::InvalidPath(file_path.to_path_buf())
-        })?;
+        let uri = Url::from_file_path(file_path)
+            .map_err(|_| LspError::InvalidPath(file_path.to_path_buf()))?;
 
         let params = HoverParams {
             text_document_position_params: TextDocumentPositionParams {
@@ -529,9 +526,8 @@ impl LspClient {
             self.did_open(file_path).await?;
         }
 
-        let uri = Url::from_file_path(file_path).map_err(|_| {
-            LspError::InvalidPath(file_path.to_path_buf())
-        })?;
+        let uri = Url::from_file_path(file_path)
+            .map_err(|_| LspError::InvalidPath(file_path.to_path_buf()))?;
 
         let params = DocumentSymbolParams {
             text_document: TextDocumentIdentifier { uri },
@@ -539,14 +535,12 @@ impl LspClient {
             partial_result_params: PartialResultParams::default(),
         };
 
-        self.send_request("textDocument/documentSymbol", params).await
+        self.send_request("textDocument/documentSymbol", params)
+            .await
     }
 
     /// Get diagnostics for a file
-    pub async fn get_diagnostics(
-        &self,
-        file_path: &Path,
-    ) -> Result<Vec<Diagnostic>, LspError> {
+    pub async fn get_diagnostics(&self, file_path: &Path) -> Result<Vec<Diagnostic>, LspError> {
         // Ensure document is opened to receive diagnostics
         if !self.opened_documents.lock().await.contains_key(file_path) {
             self.did_open(file_path).await?;
@@ -556,7 +550,10 @@ impl LspClient {
         }
 
         let diagnostics_guard = self.diagnostics.lock().await;
-        Ok(diagnostics_guard.get(file_path).cloned().unwrap_or_default())
+        Ok(diagnostics_guard
+            .get(file_path)
+            .cloned()
+            .unwrap_or_default())
     }
 
     /// Search for symbols across the workspace

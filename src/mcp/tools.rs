@@ -5,11 +5,11 @@
 use crate::lsp::LspManager;
 use crate::mcp::protocol::{CallToolResult, Tool, ToolContent};
 use lsp_types::*;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use serde_json::Value;
 use std::path::PathBuf;
 use std::sync::Arc;
-use tracing::{debug, error};
+use tracing::error;
 
 /// Get all tool definitions
 pub fn get_tool_definitions() -> Vec<Tool> {

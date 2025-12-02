@@ -1,7 +1,7 @@
 use anyhow::Result;
 use clap::Parser;
 use std::path::PathBuf;
-use tracing::{info, Level};
+use tracing::{error, info, Level};
 use tracing_subscriber::{fmt, EnvFilter};
 
 /// Language Server Manager for Model Context Protocol
@@ -20,19 +20,19 @@ struct Args {
     workspace: Option<PathBuf>,
 
     /// Log level (trace, debug, info, warn, error)
-    #[arg(short, long, default_value = "error")]
+    #[arg(short, long, default_value = "info")]
     log_level: String,
 
     /// Log to file instead of stderr
-    #[arg(long)]
-    log_file: Option<PathBuf>,
+    #[arg(long, default_value = "/tmp/lsmcp.log")]
+    log_file: PathBuf,
 
     /// Disable logging entirely (for MCP client compatibility)
     #[arg(long)]
     no_log: bool,
 }
 
-fn setup_logging(log_level: &str, log_file: Option<PathBuf>) -> Result<()> {
+fn setup_logging(log_level: &str, log_file: PathBuf) -> Result<()> {
     let level = match log_level.to_lowercase().as_str() {
         "trace" => Level::TRACE,
         "debug" => Level::DEBUG,
@@ -42,8 +42,7 @@ fn setup_logging(log_level: &str, log_file: Option<PathBuf>) -> Result<()> {
         _ => Level::INFO,
     };
 
-    let filter = EnvFilter::from_default_env()
-        .add_directive(level.into());
+    let filter = EnvFilter::from_default_env().add_directive(level.into());
 
     let subscriber = fmt()
         .with_env_filter(filter)
@@ -52,12 +51,8 @@ fn setup_logging(log_level: &str, log_file: Option<PathBuf>) -> Result<()> {
         .with_file(true)
         .with_line_number(true);
 
-    if let Some(log_path) = log_file {
-        let file = std::fs::File::create(log_path)?;
-        subscriber.with_writer(file).init();
-    } else {
-        subscriber.with_writer(std::io::stderr).init();
-    }
+    let file = std::fs::File::create(log_file)?;
+    subscriber.with_writer(file).init();
 
     Ok(())
 }
@@ -108,7 +103,7 @@ async fn main() -> Result<()> {
     let config = match lsmcp::ConfigLoader::new() {
         Ok(config) => std::sync::Arc::new(config),
         Err(e) => {
-            eprintln!("Failed to load configuration: {}", e);
+            error!("Failed to load configuration: {}", e);
             return Err(e.into());
         }
     };
@@ -119,7 +114,7 @@ async fn main() -> Result<()> {
     let lsp_manager = match lsmcp::LspManager::new(workspace_root, config) {
         Ok(manager) => std::sync::Arc::new(manager),
         Err(e) => {
-            eprintln!("Failed to create LSP manager: {}", e);
+            error!("Failed to create LSP manager: {}", e);
             return Err(e.into());
         }
     };
@@ -137,7 +132,7 @@ async fn main() -> Result<()> {
             info!("MCP server stopped normally");
         }
         Err(e) => {
-            eprintln!("MCP server error: {}", e);
+            error!("MCP server error: {}", e);
             return Err(e);
         }
     }
