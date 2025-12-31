@@ -17,27 +17,27 @@ Build a Model Context Protocol (MCP) server that acts as a universal bridge betw
          │
 ┌────────▼────────────────────────────┐
 │    lsmcp (Rust Binary)              │
-│                                      │
+│                                     │
 │  ┌──────────────────────────────┐   │
 │  │  MCP Server (mcp-rs)         │   │
 │  │  - Tool handlers             │   │
 │  │  - Request routing           │   │
 │  └──────────┬───────────────────┘   │
-│             │                        │
+│             │                       │
 │  ┌──────────▼───────────────────┐   │
 │  │    LSP Manager               │   │
 │  │  - Arc<Mutex<HashMap>>       │   │
 │  │  - Lazy initialization       │   │
 │  │  - Process lifecycle         │   │
 │  └──────────┬───────────────────┘   │
-│             │                        │
+│             │                       │
 │  ┌──────────▼───────────────────┐   │
 │  │  LSP Client Pool             │   │
 │  │  - Tokio child processes     │   │
 │  │  - JSON-RPC over stdio       │   │
 │  │  - Per-language clients      │   │
 │  └──────────┬───────────────────┘   │
-└─────────────┼────────────────────────┘
+└─────────────┼───────────────────────┘
               │ LSP Protocol (JSON-RPC)
      ┌────────┴────────┐
      │                 │
@@ -45,7 +45,7 @@ Build a Model Context Protocol (MCP) server that acts as a universal bridge betw
 │typescript│    │  rust-     │
 │-language-│    │  analyzer  │ ...
 │ server   │    │            │
-└───────────┘    └────────────┘
+└──────────┘    └────────────┘
 ```
 
 ## Core Components
